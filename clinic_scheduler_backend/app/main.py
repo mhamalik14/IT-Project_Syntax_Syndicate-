@@ -1,9 +1,9 @@
 from fastapi import FastAPI
-from app.routers import appointments
+from app.routers import appointments, auth
 
 app = FastAPI(title="Clinic Scheduling API")
 
-# include routers
+app.include_router(auth.router)
 app.include_router(appointments.router)
 
 @app.get("/")
