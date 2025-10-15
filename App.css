@@ -1,0 +1,39 @@
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #f4f6f8;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar {
+  background: #0077b6;
+  color: white;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar a, .navbar button {
+  color: white;
+  margin: 0 0.5rem;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.container, .form-container {
+  margin: 2rem auto;
+  max-width: 600px;
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+}
+
+form input, form select, form button {
+  display: block;
+  width: 100%;
+  margin-bottom: 1rem;
+  padding: 0.7rem;
+}
