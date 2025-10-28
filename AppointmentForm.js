@@ -11,6 +11,8 @@ export default function AppointmentForm({ onBooked }) {
     end_time: "",
   });
 
+  const [loading, setLoading] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -21,6 +23,10 @@ export default function AppointmentForm({ onBooked }) {
       alert(err.response?.data?.detail || "Error booking appointment");
     }
   };
+    if (!form.clinic_id || !form.patient_id || !form.start_time || !form.end_time) {
+  alert("Please fill in all required fields.");
+  return;
+} 
 
   return (
     <form onSubmit={handleSubmit}>
@@ -36,3 +42,4 @@ export default function AppointmentForm({ onBooked }) {
     </form>
   );
 }
+
