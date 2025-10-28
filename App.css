@@ -37,3 +37,62 @@ form input, form select, form button {
   margin-bottom: 1rem;
   padding: 0.7rem;
 }
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+}
+
+.navbar div {
+  display: flex;
+  gap: 1rem;
+}
+
+.active-link {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .navbar div {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .container, .form-container {
+    margin: 1rem;
+    padding: 1rem;
+  }
+}
+
+form button, .navbar button {
+  background-color: #0077b6;
+  color: white;
+  border-radius: 5px;
+  transition: background 0.3s ease;
+}
+
+form button:hover, .navbar button:hover {
+  background-color: #005f8e;
+}
+
+.status {
+  display: inline-block;
+  padding: 0.3rem 0.6rem;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  color: white;
+}
+
+.status.pending { background: #f9a825; }
+.status.confirmed { background: #43a047; }
+.status.cancelled { background: #e53935; }
+
+
