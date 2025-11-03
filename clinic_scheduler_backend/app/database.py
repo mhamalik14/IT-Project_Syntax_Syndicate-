@@ -4,7 +4,8 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()  # Loads environment variables from .env file
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./clinic.db")
+
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
