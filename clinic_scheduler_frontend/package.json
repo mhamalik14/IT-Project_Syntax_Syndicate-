@@ -1,0 +1,23 @@
+{
+  "name": "clinic_scheduler_frontend",
+  "version": "1.0.0",
+  "main": "AdminPanel.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite",
+    "build": "vite build",
+    "start": "vite"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@vitejs/plugin-react": "^4.7.0",
+    "axios": "^1.13.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.5",
+    "vite": "^6.4.1"
+  }
+}
