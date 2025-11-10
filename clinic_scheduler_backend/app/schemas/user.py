@@ -7,11 +7,16 @@ class UserCreate(BaseModel):
     password: str
     role: str = "patient"
 
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
 class UserOut(BaseModel):
     id: uuid.UUID
     name: str
     email: EmailStr
     role: str
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }

@@ -1,12 +1,27 @@
 import { Link, useNavigate } from "react-router-dom";
+import { getUserFromToken } from "../utils/auth";
 
 export default function Navbar() {
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+  const user = getUserFromToken();
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/");
+  };
+
+  const getDashboardLink = () => {
+    if (!user) return "/dashboard";
+    switch (user.role) {
+      case "patient":
+        return "/patient/dashboard";
+      case "staff":
+        return "/staff/dashboard";
+      case "admin":
+        return "/admin/dashboard";
+      default:
+        return "/dashboard";
+    }
   };
 
   return (
@@ -14,9 +29,9 @@ export default function Navbar() {
       <h2>Que-Quick Reserve</h2>
       <div className="nav-links">
         <Link to="/">Home</Link>
-        {token ? (
+        {user ? (
           <>
-            <Link to="/dashboard">Dashboard</Link>
+            <Link to={getDashboardLink()}>Dashboard</Link>
             <button onClick={handleLogout}>Logout</button>
           </>
         ) : (

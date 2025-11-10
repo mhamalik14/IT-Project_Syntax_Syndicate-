@@ -4,7 +4,7 @@ from sqlalchemy.sql import func
 from sqlalchemy import DateTime
 from sqlalchemy.orm import relationship
 import uuid
-from app.database import Base
+from ..database import Base
 
 class User(Base):
     __tablename__ = "users"
@@ -14,8 +14,7 @@ class User(Base):
     email = Column(String(120), unique=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     role = Column(String(20), default="patient")  # patient, staff, admin
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-created_at = Column(DateTime(timezone=True), server_default=func.now())
-updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
-appointments = relationship("Appointment", back_populates="patient")
+    appointments = relationship("Appointment", back_populates="patient")

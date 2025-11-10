@@ -1,20 +1,44 @@
-import { useState } from "react";
-import API from "../api/api";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../api/api";
+import jwt_decode from 'jwt-decode';
 
-export default function Login() {
+const Login = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
+
     try {
-      const { data } = await API.post("/auth/login", null, { params: { email, password } });
-      localStorage.setItem("token", data.access_token);
-      navigate("/dashboard");
-    } catch (err) {
-      alert(err.response?.data?.detail || "Login failed");
+      const response = await api.post("/auth/login", { email, password });
+      const { access_token } = response.data;
+      localStorage.setItem("token", access_token);
+
+      // Decode token to get user role
+      const decoded = jwt_decode(access_token);
+      const role = decoded.role;
+
+      switch (role) {
+        case "patient":
+          navigate("/patient/dashboard");
+          break;
+        case "staff":
+          navigate("/staff/dashboard");
+          break;
+        case "admin":
+          navigate("/admin/dashboard");
+          break;
+        default:
+          navigate("/");
+      }
+    } catch (error) {
+      alert("Invalid credentials. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -23,11 +47,37 @@ export default function Login() {
       <div className="form-container">
         <h2>Login</h2>
         <form onSubmit={handleLogin}>
-          <input type="email" placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
-          <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+
           <button type="submit">Login</button>
         </form>
+
+        <p className="text-center text-gray-600 mt-4">
+          Don't have an account?{" "}
+          <span
+            onClick={() => navigate("/register")}
+            className="text-blue-600 font-semibold cursor-pointer hover:underline"
+          >
+            Register
+          </span>
+        </p>
       </div>
     </div>
   );
-}
+};
+
+export default Login;

@@ -1,3 +1,3 @@
-from app.routers import appointments
+from . import appointments, auth, clinics, rooms, providers
 
-__all__ = ["appointments"]
+__all__ = ["appointments", "auth", "clinics", "rooms", "providers"]
