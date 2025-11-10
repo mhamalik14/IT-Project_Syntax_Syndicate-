@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uuid
@@ -74,7 +74,7 @@ app.add_middleware(
 # ==========================================================
 # FAKE IN-MEMORY DATABASE
 # ==========================================================
-fake_db = {}
+fake_db = {}  # Note: This is in-memory, profile updates won't persist across restarts
 
 # ==========================================================
 # AUTH ROUTES
@@ -125,8 +125,74 @@ def login(user: UserLogin):
     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
     return {"access_token": token, "token_type": "bearer"}
 
+@app.get("/auth/profile")
+def get_profile(request: Request):
+    # Get token from Authorization header
+    auth_header = request.headers.get("authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Token missing or invalid")
+
+    token = auth_header.split(" ")[1]
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_email = payload.get("email")
+        if not user_email or user_email not in fake_db:
+            raise HTTPException(status_code=401, detail="Invalid token")
+
+        user_data = fake_db[user_email]
+        return {
+            "id": user_data["id"],
+            "name": user_data.get("name", ""),
+            "email": user_data["email"],
+            "role": user_data["role"],
+            "phone": user_data.get("phone", None),
+            "date_of_birth": user_data.get("date_of_birth", None),
+            "address": user_data.get("address", None),
+            "emergency_contact": user_data.get("emergency_contact", None),
+        }
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+@app.put("/auth/profile")
+def update_profile(user_update: dict, request: Request):
+    # Get token from Authorization header
+    auth_header = request.headers.get("authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Token missing or invalid")
+
+    token = auth_header.split(" ")[1]
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_email = payload.get("email")
+        if not user_email or user_email not in fake_db:
+            raise HTTPException(status_code=401, detail="Invalid token")
+
+        user_data = fake_db[user_email]
+        # Update fields
+        for field in ["name", "phone", "date_of_birth", "address", "emergency_contact"]:
+            if field in user_update and user_update[field] is not None:
+                user_data[field] = user_update[field]
+
+        return {
+            "id": user_data["id"],
+            "name": user_data.get("name", ""),
+            "email": user_data["email"],
+            "role": user_data["role"],
+            "phone": user_data.get("phone", None),
+            "date_of_birth": user_data.get("date_of_birth", None),
+            "address": user_data.get("address", None),
+            "emergency_contact": user_data.get("emergency_contact", None),
+        }
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
 # ==========================================================
-# INCLUDE APPOINTMENTS ROUTER
+# INCLUDE ROUTERS
 # ==========================================================
-from app.routers import appointments  # Make sure this path matches your project structure
+from app.routers import appointments, auth  # Make sure this path matches your project structure
 app.include_router(appointments.router)
+app.include_router(auth.router)

@@ -161,13 +161,14 @@ export default function PatientDashboard() {
       {/* Patient Information Form */}
       <PatientInfoForm user={user} onUpdate={(updatedUser) => {
         // Update local user state if needed
-        console.log("Profile updated:", updatedUser);
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        window.location.reload(); // Simple way to refresh the page with updated data
       }} />
 
       {/* Quick Stats */}
       <div className="services-section">
         <h3 className="section-title">Quick Stats</h3>
-        <div className="service-cards">
+        <div className="service-cards" style={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap' }}>
           <div className="service-card">
             <div className="service-icon">📊</div>
             <h4 className="service-title">Total Appointments</h4>
@@ -190,9 +191,11 @@ export default function PatientDashboard() {
       <div className="cta-section">
         <h3 className="section-title">➡️ Book New Appointment</h3>
         <p className="cta-text">
-          (Click the button above to book a new appointment quickly and easily.)
+          (Click the button below to book a new appointment quickly and easily.)
         </p>
-        <Link to="/book" className="cta-button">Book New Appointment</Link>
+        <div className="text-center">
+          <Link to="/book" className="cta-button">Book New Appointment</Link>
+        </div>
       </div>
 
       {/* Upcoming Appointments */}
