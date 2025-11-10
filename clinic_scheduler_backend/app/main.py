@@ -8,21 +8,27 @@ import hmac
 import jwt
 from datetime import datetime, timedelta
 
-# --- Config ---
-SECRET_KEY = "your_secret_key"  # change in production!
+# ==========================================================
+# CONFIG
+# ==========================================================
+SECRET_KEY = "your_secret_key"  # ⚠️ Replace with a secure secret in production!
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 1
 
-# --- Pydantic Schemas ---
+# ==========================================================
+# SCHEMAS
+# ==========================================================
 class UserCreate(BaseModel):
     name: str
     email: str
     password: str
     role: str = "patient"
 
+
 class UserLogin(BaseModel):
     email: str
     password: str
+
 
 class UserOut(BaseModel):
     id: uuid.UUID
@@ -31,49 +37,59 @@ class UserOut(BaseModel):
     role: str
 
     class Config:
-        from_attributes = True  # Pydantic v2
+        from_attributes = True  # for Pydantic v2
 
-# --- Password hashing ---
+# ==========================================================
+# PASSWORD UTILITIES
+# ==========================================================
 def hash_password(password: str) -> str:
     salt = os.urandom(16)
-    dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 100000)
-    return salt.hex() + ":" + dk.hex()
+    dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 100_000)
+    return f"{salt.hex()}:{dk.hex()}"
+
 
 def verify_password(password: str, stored: str) -> bool:
     try:
         salt_hex, dk_hex = stored.split(":")
-    except ValueError:
+        salt = bytes.fromhex(salt_hex)
+        dk = bytes.fromhex(dk_hex)
+        new_dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 100_000)
+        return hmac.compare_digest(new_dk, dk)
+    except Exception:
         return False
-    salt = bytes.fromhex(salt_hex)
-    dk = bytes.fromhex(dk_hex)
-    new_dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 100000)
-    return hmac.compare_digest(new_dk, dk)
 
-# --- App setup ---
-app = FastAPI()
+# ==========================================================
+# FASTAPI APP SETUP
+# ==========================================================
+app = FastAPI(title="Clinic Scheduler API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # frontend URL in production
+    allow_origins=["*"],  # Change to frontend URL later
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# --- In-memory DB ---
+# ==========================================================
+# FAKE IN-MEMORY DATABASE
+# ==========================================================
 fake_db = {}
 
-# --- Routes ---
+# ==========================================================
+# AUTH ROUTES
+# ==========================================================
 @app.get("/")
 def read_root():
     return {"message": "API is running!"}
+
 
 @app.post("/auth/register", response_model=UserOut)
 def register(user: UserCreate):
     if user.email in fake_db:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            detail="Email already registered",
         )
     hashed_pw = hash_password(user.password)
     user_id = uuid.uuid4()
@@ -82,24 +98,35 @@ def register(user: UserCreate):
         "name": user.name,
         "email": user.email,
         "role": user.role,
-        "password": hashed_pw
+        "password": hashed_pw,
     }
     fake_db[user.email] = user_data
     return user_data
+
 
 @app.post("/auth/login")
 def login(user: UserLogin):
     db_user = fake_db.get(user.email)
     if not db_user or not verify_password(user.password, db_user["password"]):
-        raise HTTPException(status_code=400, detail="Invalid credentials")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid credentials",
+        )
 
-    # Create JWT token
     expire = datetime.utcnow() + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
     payload = {
         "sub": str(db_user["id"]),
         "email": db_user["email"],
+        "name": db_user["name"],
         "role": db_user["role"],
-        "exp": expire
+        "exp": expire,
     }
+
     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-    return {"access_token": token}
+    return {"access_token": token, "token_type": "bearer"}
+
+# ==========================================================
+# INCLUDE APPOINTMENTS ROUTER
+# ==========================================================
+from app.routers import appointments  # Make sure this path matches your project structure
+app.include_router(appointments.router)

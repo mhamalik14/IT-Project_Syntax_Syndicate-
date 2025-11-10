@@ -64,18 +64,18 @@ def create_appointment(appt: schemas.AppointmentCreate, db: Session = Depends(ge
 
 @router.get("/", response_model=list[schemas.Appointment])
 def get_appointments(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    user_id = current_user.get("user_id")
+    user_id = current_user.get("sub")  # or "sub" if you encoded as sub
     role = current_user.get("role")
 
     if role == "admin":
         appointments = db.query(models.Appointment).all()
     elif role == "staff":
-        # Assuming staff are providers, show appointments assigned to them
         appointments = db.query(models.Appointment).filter(models.Appointment.provider_id == user_id).all()
     else:  # patient
         appointments = db.query(models.Appointment).filter(models.Appointment.patient_id == user_id).all()
 
     return appointments
+
 
 @router.put("/{appt_id}/status", response_model=schemas.Appointment)
 def update_appointment_status(appt_id: str, status: str, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):

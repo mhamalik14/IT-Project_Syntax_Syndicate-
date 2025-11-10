@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import PatientDashboard from "./pages/PatientDashboard";
 import StaffDashboard from "./pages/StaffDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import BookAppointment from "./pages/BookAppointment";
 import "./App.css";
 
 function App() {
@@ -23,6 +24,11 @@ function App() {
           <Route path="/patient/dashboard" element={<PatientDashboard />} />
           <Route path="/staff/dashboard" element={<StaffDashboard />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+
+           <Route path="/" element={<PatientDashboard />} />
+           <Route path="/dashboard" element={<PatientDashboard />} />
+           <Route path="/book" element={<BookAppointment />} />  {/* ✅ this must exist */}
+         
         </Routes>
       </div>
     </Router>
