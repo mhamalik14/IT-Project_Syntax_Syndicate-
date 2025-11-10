@@ -18,7 +18,7 @@ const Login = () => {
       const { access_token } = response.data;
       localStorage.setItem("token", access_token);
 
-      // Decode token to get user role
+      // Decode token to get role
       const decoded = jwt_decode(access_token);
       const role = decoded.role;
 
@@ -36,6 +36,7 @@ const Login = () => {
           navigate("/");
       }
     } catch (error) {
+      console.error(error);
       alert("Invalid credentials. Please try again.");
     } finally {
       setLoading(false);
@@ -54,7 +55,6 @@ const Login = () => {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-
           <input
             type="password"
             placeholder="Password"
@@ -62,10 +62,10 @@ const Login = () => {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-
-          <button type="submit">Login</button>
+          <button type="submit" disabled={loading}>
+            {loading ? "Logging in..." : "Login"}
+          </button>
         </form>
-
         <p className="text-center text-gray-600 mt-4">
           Don't have an account?{" "}
           <span

@@ -1,12 +1,39 @@
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 import uuid
 import os
 import hashlib
 import hmac
-from app.schemas.user import UserCreate, UserOut, UserLogin
+import jwt
+from datetime import datetime, timedelta
 
-# --- Password hashing utils ---
+# --- Config ---
+SECRET_KEY = "your_secret_key"  # change in production!
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_HOURS = 1
+
+# --- Pydantic Schemas ---
+class UserCreate(BaseModel):
+    name: str
+    email: str
+    password: str
+    role: str = "patient"
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+class UserOut(BaseModel):
+    id: uuid.UUID
+    name: str
+    email: str
+    role: str
+
+    class Config:
+        from_attributes = True  # Pydantic v2
+
+# --- Password hashing ---
 def hash_password(password: str) -> str:
     salt = os.urandom(16)
     dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 100000)
@@ -22,19 +49,18 @@ def verify_password(password: str, stored: str) -> bool:
     new_dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 100000)
     return hmac.compare_digest(new_dk, dk)
 
-# --- FastAPI app ---
+# --- App setup ---
 app = FastAPI()
 
-# --- CORS middleware ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # change to your frontend URL in production
+    allow_origins=["*"],  # frontend URL in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# --- In-memory "database" ---
+# --- In-memory DB ---
 fake_db = {}
 
 # --- Routes ---
@@ -65,19 +91,15 @@ def register(user: UserCreate):
 def login(user: UserLogin):
     db_user = fake_db.get(user.email)
     if not db_user or not verify_password(user.password, db_user["password"]):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid credentials"
-        )
-    # For frontend compatibility
-    return {
-        "success": True,
-        "user": {
-            "id": str(db_user["id"]),
-            "name": db_user["name"],
-            "email": db_user["email"],
-            "role": db_user["role"]
-        },
-        "message": f"Welcome {db_user['name']}"
-    }
+        raise HTTPException(status_code=400, detail="Invalid credentials")
 
+    # Create JWT token
+    expire = datetime.utcnow() + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
+    payload = {
+        "sub": str(db_user["id"]),
+        "email": db_user["email"],
+        "role": db_user["role"],
+        "exp": expire
+    }
+    token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    return {"access_token": token}
