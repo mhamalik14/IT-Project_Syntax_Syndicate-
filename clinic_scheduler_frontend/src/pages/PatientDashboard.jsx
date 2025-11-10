@@ -3,6 +3,84 @@ import api from "../api/api";
 import { getCurrentUser } from "../utils/auth";
 import { Link } from "react-router-dom";
 
+const PatientInfoForm = ({ user, onUpdate }) => {
+  const [formData, setFormData] = useState({
+    name: user.name || "",
+    phone: user.phone || "",
+    date_of_birth: user.date_of_birth || "",
+    address: user.address || "",
+    emergency_contact: user.emergency_contact || "",
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const response = await api.put("/auth/profile", formData);
+      onUpdate(response.data);
+      alert("Profile updated successfully!");
+    } catch (error) {
+      alert("Failed to update profile. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="purpose-section">
+      <h3 className="section-title">📋 Patient Information</h3>
+      <p className="purpose-text">
+        Please provide your personal information to help us serve you better.
+      </p>
+      <form onSubmit={handleSubmit} className="form-container" style={{ maxWidth: "600px", margin: "0 auto" }}>
+        <input
+          type="text"
+          name="name"
+          placeholder="Full Name"
+          value={formData.name}
+          onChange={handleChange}
+        />
+        <input
+          type="tel"
+          name="phone"
+          placeholder="Phone Number"
+          value={formData.phone}
+          onChange={handleChange}
+        />
+        <input
+          type="date"
+          name="date_of_birth"
+          placeholder="Date of Birth"
+          value={formData.date_of_birth}
+          onChange={handleChange}
+        />
+        <input
+          type="text"
+          name="address"
+          placeholder="Address"
+          value={formData.address}
+          onChange={handleChange}
+        />
+        <input
+          type="text"
+          name="emergency_contact"
+          placeholder="Emergency Contact"
+          value={formData.emergency_contact}
+          onChange={handleChange}
+        />
+        <button type="submit" disabled={loading}>
+          {loading ? "Updating..." : "Update Profile"}
+        </button>
+      </form>
+    </div>
+  );
+};
+
 export default function PatientDashboard() {
   const user = getCurrentUser(); // get JWT-decoded user
   const [appointments, setAppointments] = useState([]);
@@ -70,11 +148,21 @@ export default function PatientDashboard() {
       <div className="purpose-section">
         <h3 className="section-title">Member Info</h3>
         <div className="text-center">
-          <p><strong>Patient Name:</strong> {user.name || "John Doe"}</p>
+          <p><strong>Patient Name:</strong> {user.name || "Not provided"}</p>
           <p><strong>Last Login:</strong> {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}</p>
           <p><strong>Member Since:</strong> March 2024</p>
+          <p><strong>Phone:</strong> {user.phone || "Not provided"}</p>
+          <p><strong>Date of Birth:</strong> {user.date_of_birth || "Not provided"}</p>
+          <p><strong>Address:</strong> {user.address || "Not provided"}</p>
+          <p><strong>Emergency Contact:</strong> {user.emergency_contact || "Not provided"}</p>
         </div>
       </div>
+
+      {/* Patient Information Form */}
+      <PatientInfoForm user={user} onUpdate={(updatedUser) => {
+        // Update local user state if needed
+        console.log("Profile updated:", updatedUser);
+      }} />
 
       {/* Quick Stats */}
       <div className="services-section">

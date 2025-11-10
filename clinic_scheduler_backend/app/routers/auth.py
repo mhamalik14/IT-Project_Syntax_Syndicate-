@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models.user import User
-from ..schemas.user import UserCreate, UserOut
+from ..schemas.user import UserCreate, UserOut, UserUpdate, UserProfile
 from ..utils.hashing import hash_password, verify_password
-from ..utils.jwt_token import create_access_token
+from ..utils.jwt_token import create_access_token, get_current_user
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -33,3 +33,15 @@ def login(email: str, password: str, db: Session = Depends(get_db)):
 
     token = create_access_token({"user_id": str(user.id), "role": user.role, "name": user.name})
     return {"access_token": token, "token_type": "bearer"}
+
+@router.get("/profile", response_model=UserProfile)
+def get_profile(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return current_user
+
+@router.put("/profile", response_model=UserProfile)
+def update_profile(user_update: UserUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    for field, value in user_update.model_dump(exclude_unset=True).items():
+        setattr(current_user, field, value)
+    db.commit()
+    db.refresh(current_user)
+    return current_user

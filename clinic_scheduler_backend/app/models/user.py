@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, Date
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy import DateTime
@@ -14,6 +14,10 @@ class User(Base):
     email = Column(String(120), unique=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     role = Column(String(20), default="patient")  # patient, staff, admin
+    phone = Column(String(20))
+    date_of_birth = Column(Date)
+    address = Column(String(255))
+    emergency_contact = Column(String(100))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
