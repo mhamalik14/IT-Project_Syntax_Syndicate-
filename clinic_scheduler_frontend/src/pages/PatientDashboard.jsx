@@ -45,38 +45,174 @@ export default function PatientDashboard() {
     );
   }
 
+  // Calculate quick stats
+  const totalAppointments = appointments.length;
+  const upcomingAppointments = appointments.filter(a => a.status !== "Completed").length;
+  const completedAppointments = appointments.filter(a => a.status === "Completed").length;
+
+  // Separate appointments
+  const upcoming = appointments.filter(a => a.status !== "Completed");
+  const past = appointments.filter(a => a.status === "Completed");
+
   return (
     <div className="container">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold">Your Appointments</h2>
-        <Link to="/book" className="text-indigo-600 hover:underline">
-          Book new
-        </Link>
+      {/* Welcome Message */}
+      <div className="hero-section">
+        <div className="hero-content">
+          <h1 className="hero-title">👋 Welcome, {user.name || "Patient"}!</h1>
+          <p className="hero-description">
+            Here’s your personalized dashboard — manage your upcoming appointments, view your booking history, and stay connected with your healthcare providers all in one place.
+          </p>
+        </div>
       </div>
 
-      <div className="space-y-4">
-        {appointments.length === 0 ? (
-          <div className="text-gray-500">No appointments found.</div>
+      {/* Member Info */}
+      <div className="purpose-section">
+        <h3 className="section-title">Member Info</h3>
+        <div className="text-center">
+          <p><strong>Patient Name:</strong> {user.name || "John Doe"}</p>
+          <p><strong>Last Login:</strong> {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}</p>
+          <p><strong>Member Since:</strong> March 2024</p>
+        </div>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="services-section">
+        <h3 className="section-title">Quick Stats</h3>
+        <div className="service-cards">
+          <div className="service-card">
+            <div className="service-icon">📊</div>
+            <h4 className="service-title">Total Appointments</h4>
+            <p className="text-center text-2xl font-bold">{totalAppointments}</p>
+          </div>
+          <div className="service-card">
+            <div className="service-icon">⏰</div>
+            <h4 className="service-title">Upcoming</h4>
+            <p className="text-center text-2xl font-bold">{upcomingAppointments}</p>
+          </div>
+          <div className="service-card">
+            <div className="service-icon">✅</div>
+            <h4 className="service-title">Completed</h4>
+            <p className="text-center text-2xl font-bold">{completedAppointments}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Book New Appointment */}
+      <div className="cta-section">
+        <h3 className="section-title">➡️ Book New Appointment</h3>
+        <p className="cta-text">
+          (Click the button above to book a new appointment quickly and easily.)
+        </p>
+        <Link to="/book" className="cta-button">Book New Appointment</Link>
+      </div>
+
+      {/* Upcoming Appointments */}
+      <div className="purpose-section">
+        <h3 className="section-title">📅 Your Upcoming Appointments</h3>
+        <p className="purpose-text">
+          View and manage your upcoming visits. You can reschedule or cancel directly from here.
+        </p>
+        {upcoming.length === 0 ? (
+          <p className="text-center text-gray-500">No upcoming appointments.</p>
         ) : (
-          appointments.map((a) => (
-            <div key={a._id || a.id} className="bg-white p-4 rounded shadow">
-              <div className="flex justify-between items-center">
-                <div>
-                  <div className="font-semibold">
-                    {a.clinicName || a.clinic?.name}
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    {a.date} • {a.timeSlot}
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    Doctor: {a.doctorName || a.doctor?.name || "TBD"}
-                  </div>
-                </div>
-                <div className="text-sm text-gray-500">{a.status || "Booked"}</div>
-              </div>
-            </div>
-          ))
+          <table className="w-full border-collapse border border-gray-300">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border border-gray-300 p-2">Date</th>
+                <th className="border border-gray-300 p-2">Time</th>
+                <th className="border border-gray-300 p-2">Clinic</th>
+                <th className="border border-gray-300 p-2">Doctor</th>
+                <th className="border border-gray-300 p-2">Status</th>
+                <th className="border border-gray-300 p-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {upcoming.map((a) => (
+                <tr key={a._id || a.id}>
+                  <td className="border border-gray-300 p-2">{a.date}</td>
+                  <td className="border border-gray-300 p-2">{a.timeSlot}</td>
+                  <td className="border border-gray-300 p-2">{a.clinicName || a.clinic?.name}</td>
+                  <td className="border border-gray-300 p-2">{a.doctorName || a.doctor?.name || "TBD"}</td>
+                  <td className="border border-gray-300 p-2">{a.status || "Confirmed"}</td>
+                  <td className="border border-gray-300 p-2">
+                    <button className="text-blue-600 hover:underline mr-2">Cancel</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
+      </div>
+
+      {/* Past Appointments */}
+      <div className="purpose-section">
+        <h3 className="section-title">📜 Past Appointments</h3>
+        <p className="purpose-text">
+          A summary of your previous appointments and their outcomes.
+        </p>
+        {past.length === 0 ? (
+          <p className="text-center text-gray-500">No past appointments.</p>
+        ) : (
+          <table className="w-full border-collapse border border-gray-300">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border border-gray-300 p-2">Date</th>
+                <th className="border border-gray-300 p-2">Clinic</th>
+                <th className="border border-gray-300 p-2">Doctor</th>
+                <th className="border border-gray-300 p-2">Notes</th>
+                <th className="border border-gray-300 p-2">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {past.map((a) => (
+                <tr key={a._id || a.id}>
+                  <td className="border border-gray-300 p-2">{a.date}</td>
+                  <td className="border border-gray-300 p-2">{a.clinicName || a.clinic?.name}</td>
+                  <td className="border border-gray-300 p-2">{a.doctorName || a.doctor?.name || "TBD"}</td>
+                  <td className="border border-gray-300 p-2">Follow-up recommended</td>
+                  <td className="border border-gray-300 p-2">{a.status}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* Reminders and Notifications */}
+      <div className="purpose-section">
+        <h3 className="section-title">🔔 Reminders and Notifications</h3>
+        <p className="purpose-text">
+          Stay on top of your healthcare journey with instant reminders and alerts.
+        </p>
+        <h4 className="text-lg font-semibold mb-2">Recent Notifications:</h4>
+        <ul className="list-disc list-inside">
+          <li>🩺 Your appointment with Dr. Jacobs is tomorrow at 09:30 AM.</li>
+          <li>⚕️ New slot availability at City Clinic next week.</li>
+          <li>💊 Reminder: Don’t forget to bring your medical card during your next visit.</li>
+        </ul>
+      </div>
+
+      {/* Assistance */}
+      <div className="purpose-section">
+        <h3 className="section-title">💬 Need Assistance or Want to Share Feedback?</h3>
+        <p className="purpose-text">
+          We value your experience. Reach out to our support team or share feedback to help us improve the system.
+        </p>
+        <div className="text-center">
+          <button className="cta-button mr-4">📝 Submit Feedback</button>
+          <button className="cta-button">📞 Contact Support</button>
+        </div>
+      </div>
+
+      {/* Daily Health Tip */}
+      <div className="commitment-section">
+        <h3 className="section-title">🧠 Daily Health Tip</h3>
+        <blockquote className="commitment-quote">
+          💡 “Drink at least 2 liters of water every day to stay hydrated and energized.”
+          <br />
+          Stay healthy — small steps make a big difference.
+        </blockquote>
       </div>
     </div>
   );
