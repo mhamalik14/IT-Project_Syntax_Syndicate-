@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../api/api";
+import { getProfile, updateProfile } from "../api/auth";
 import { getCurrentUser } from "../utils/auth";
 import { Link } from "react-router-dom";
 
@@ -21,7 +22,7 @@ const PatientInfoForm = ({ user, onUpdate }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await api.put("/auth/profile", formData);
+    const response = await updateProfile(formData);
       onUpdate(response.data);
       alert("Profile updated successfully!");
     } catch (error) {
@@ -82,17 +83,34 @@ const PatientInfoForm = ({ user, onUpdate }) => {
 };
 
 export default function PatientDashboard() {
-  const user = JSON.parse(localStorage.getItem("user")) || getCurrentUser();
+  const user = getCurrentUser(); // get JWT-decoded user
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user && user.id) {
-      fetchAppointments();
-    } else {
-      console.warn("User not loaded or missing ID");
-      setLoading(false);
-    }
+    let mounted = true;
+    const load = async () => {
+      if (!(user && user.id)) {
+        console.warn("User not loaded or missing ID");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Fetch latest profile from server
+        const profile = await getProfile();
+        // Merge profile into local storage shape used by getCurrentUser
+        localStorage.setItem("user", JSON.stringify(profile));
+      } catch (err) {
+        console.warn("Failed to fetch profile:", err);
+      }
+
+      await fetchAppointments();
+      if (mounted) setLoading(false);
+    };
+
+    load();
+    return () => { mounted = false; };
   }, [user]);
 
   const fetchAppointments = async () => {

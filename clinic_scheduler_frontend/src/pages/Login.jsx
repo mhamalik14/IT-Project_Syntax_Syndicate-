@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../api/api";
+import { loginUser } from "../api/auth";
 import jwt_decode from 'jwt-decode';
 
 const Login = () => {
@@ -14,12 +14,14 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await api.post("/auth/login", { email, password });
-      const { access_token } = response.data;
-      localStorage.setItem("token", access_token);
+      const response = await loginUser(email, password);
+
+      // Response may be normalized or nested; support multiple shapes
+      const token = response?.access_token ?? response?.token ?? response?.data?.access_token ?? response?.data?.token ?? localStorage.getItem('token');
+      if (!token) throw new Error('No token returned from server');
 
       // Decode token to get role
-      const decoded = jwt_decode(access_token);
+      const decoded = jwt_decode(token);
       const role = decoded.role;
 
       switch (role) {
@@ -36,8 +38,9 @@ const Login = () => {
           navigate("/");
       }
     } catch (error) {
-      console.error(error);
-      alert("Invalid credentials. Please try again.");
+      console.error("Login error:", error);
+      const msg = error?.response?.data?.detail || error?.message || "Invalid credentials. Please try again.";
+      alert(msg);
     } finally {
       setLoading(false);
     }
@@ -81,3 +84,4 @@ const Login = () => {
 };
 
 export default Login;
+

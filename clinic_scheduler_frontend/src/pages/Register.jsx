@@ -96,6 +96,14 @@ const Register = () => {
             required
           />
 
+          <input
+            type="password"
+            placeholder="Confirm Password"
+            value={formData.confirm_password}
+            onChange={(e) => setForm({ ...form, confirm_password: e.target.value })}
+            required
+          />
+
           <select
             name="role"
             value={formData.role}
