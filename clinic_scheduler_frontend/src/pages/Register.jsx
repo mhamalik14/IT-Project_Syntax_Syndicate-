@@ -19,11 +19,18 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate password confirmation
+    if (formData.password !== formData.confirm_password) {
+      alert("Passwords do not match. Please try again.");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const response = await api.post("/auth/register", formData);
-      // If backend returns token, store it and decode role
+      // Backend now returns token, store it and decode role
       if (response.data.access_token) {
         localStorage.setItem("token", response.data.access_token);
         const decoded = jwt_decode(response.data.access_token);
@@ -42,7 +49,7 @@ const Register = () => {
             navigate("/");
         }
       } else {
-        // If no token returned, redirect based on form role
+        // Fallback if no token (shouldn't happen now)
         switch (formData.role) {
           case "patient":
             navigate("/patient/dashboard");
@@ -99,8 +106,8 @@ const Register = () => {
           <input
             type="password"
             placeholder="Confirm Password"
-            value={formData.confirm_password}
-            onChange={(e) => setForm({ ...form, confirm_password: e.target.value })}
+            value={formData.confirm_password || ""}
+            onChange={(e) => setFormData({ ...formData, confirm_password: e.target.value })}
             required
           />
 

@@ -3,10 +3,15 @@ import api from './api';
 /**
  * Register a new user.
  * @param {Object} formData - { name, email, password, role, ... }
- * @returns {Promise<any>} - response data from the backend (UserOut or token info)
+ * @returns {Promise<any>} - response data from the backend (token and user info)
  */
 export const registerUser = async (formData) => {
   const res = await api.post('/auth/register', formData);
+  // Normalize token placement and persist
+  const token = res?.data?.access_token ?? res?.data?.token;
+  if (token) {
+    localStorage.setItem('token', token);
+  }
   return res.data;
 };
 

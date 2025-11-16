@@ -64,7 +64,7 @@ def create_appointment(appt: schemas.AppointmentCreate, db: Session = Depends(ge
 
 @router.get("/", response_model=list[schemas.Appointment])
 def get_appointments(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    user_id = current_user.get("sub")  # or "sub" if you encoded as sub
+    user_id = current_user.get("user_id")  # or "sub" if you encoded as sub
     role = current_user.get("role")
 
     if role == "admin":
@@ -94,3 +94,24 @@ def update_appointment_status(appt_id: str, status: str, db: Session = Depends(g
     db.commit()
     db.refresh(appointment)
     return appointment
+
+@router.delete("/{appt_id}")
+def delete_appointment(appt_id: str, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    role = current_user.get("role")
+    user_id = current_user.get("user_id")
+    if role not in ["staff", "admin"]:
+        # Patients can only delete their own appointments
+        appointment = db.query(models.Appointment).filter(
+            models.Appointment.appt_id == appt_id,
+            models.Appointment.patient_id == user_id
+        ).first()
+        if not appointment:
+            raise HTTPException(status_code=404, detail="Appointment not found or not authorized")
+    else:
+        appointment = db.query(models.Appointment).filter(models.Appointment.appt_id == appt_id).first()
+        if not appointment:
+            raise HTTPException(status_code=404, detail="Appointment not found")
+
+    db.delete(appointment)
+    db.commit()
+    return {"message": "Appointment deleted successfully"}

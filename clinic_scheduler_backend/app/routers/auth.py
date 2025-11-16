@@ -2,13 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models.user import User
-from ..schemas.user import UserCreate, UserOut, UserUpdate, UserProfile
+from ..schemas.user import UserCreate, UserLogin, UserOut, UserUpdate, UserProfile
 from ..utils.hashing import hash_password, verify_password
 from ..utils.jwt_token import create_access_token, get_current_user
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-@router.post("/register", response_model=UserOut)
+@router.post("/register", response_model=dict)
 def register(user: UserCreate, db: Session = Depends(get_db)):
     existing = db.query(User).filter(User.email == user.email).first()
     if existing:
@@ -23,15 +23,16 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    return new_user
+    token = create_access_token({"user_id": str(new_user.id), "role": new_user.role, "name": new_user.name})
+    return {"access_token": token, "token_type": "bearer"}
 
-@router.post("/login")
-def login(email: str, password: str, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == email).first()
-    if not user or not verify_password(password, user.hashed_password):
+@router.post("/login", response_model=dict)
+def login(user: UserLogin, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.email == user.email).first()
+    if not db_user or not verify_password(user.password, db_user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    token = create_access_token({"user_id": str(user.id), "role": user.role, "name": user.name})
+    token = create_access_token({"user_id": str(db_user.id), "role": db_user.role, "name": db_user.name})
     return {"access_token": token, "token_type": "bearer"}
 
 @router.get("/profile", response_model=UserProfile)
@@ -41,6 +42,8 @@ def get_profile(current_user: User = Depends(get_current_user), db: Session = De
 @router.put("/profile", response_model=UserProfile)
 def update_profile(user_update: UserUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     for field, value in user_update.model_dump(exclude_unset=True).items():
+        if field == 'date_of_birth' and value == "":
+            value = None
         setattr(current_user, field, value)
     db.commit()
     db.refresh(current_user)

@@ -83,7 +83,7 @@ const PatientInfoForm = ({ user, onUpdate }) => {
 };
 
 export default function PatientDashboard() {
-  const user = getCurrentUser(); // get JWT-decoded user
+  const [user, setUser] = useState(getCurrentUser()); // get JWT-decoded user
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -99,7 +99,8 @@ export default function PatientDashboard() {
       try {
         // Fetch latest profile from server
         const profile = await getProfile();
-        // Merge profile into local storage shape used by getCurrentUser
+        setUser(profile);
+        // Update localStorage for persistence
         localStorage.setItem("user", JSON.stringify(profile));
       } catch (err) {
         console.warn("Failed to fetch profile:", err);
@@ -111,7 +112,7 @@ export default function PatientDashboard() {
 
     load();
     return () => { mounted = false; };
-  }, [user]);
+  }, [user?.id]);
 
   const fetchAppointments = async () => {
     try {
@@ -122,6 +123,18 @@ export default function PatientDashboard() {
       console.error("Failed to fetch appointments:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCancelAppointment = async (apptId) => {
+    if (!confirm("Are you sure you want to cancel this appointment?")) return;
+    try {
+      await api.delete(`/appointments/${apptId}`);
+      alert("Appointment cancelled successfully!");
+      fetchAppointments(); // Refresh the list
+    } catch (err) {
+      console.error("Failed to cancel appointment:", err);
+      alert("Failed to cancel appointment. Please try again.");
     }
   };
 
@@ -178,9 +191,8 @@ export default function PatientDashboard() {
 
       {/* Patient Information Form */}
       <PatientInfoForm user={user} onUpdate={(updatedUser) => {
-        // Update local user state if needed
+        setUser(updatedUser);
         localStorage.setItem("user", JSON.stringify(updatedUser));
-        window.location.reload(); // Simple way to refresh the page with updated data
       }} />
 
       {/* Quick Stats */}
@@ -245,7 +257,7 @@ export default function PatientDashboard() {
                   <td className="border border-gray-300 p-2">{a.doctorName || a.doctor?.name || "TBD"}</td>
                   <td className="border border-gray-300 p-2">{a.status || "Confirmed"}</td>
                   <td className="border border-gray-300 p-2">
-                    <button className="text-blue-600 hover:underline mr-2">Cancel</button>
+                    <button className="text-red-600 hover:underline mr-2" onClick={() => handleCancelAppointment(a.appt_id)}>Cancel</button>
                   </td>
                 </tr>
               ))}
