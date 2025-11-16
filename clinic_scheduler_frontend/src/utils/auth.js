@@ -1,18 +1,22 @@
 import jwt_decode from "jwt-decode";
 
 export function getCurrentUser() {
+  // 1️⃣ If updated profile exists in localStorage, use that first
+  const stored = localStorage.getItem("user");
+  if (stored) return JSON.parse(stored);
+
+  // 2️⃣ Otherwise fallback to token decode
   const token = localStorage.getItem("token");
   if (!token) return null;
 
   try {
     const decoded = jwt_decode(token);
-    // Normalize to a consistent shape
     return {
-      id: decoded.sub,      // The user ID from FastAPI
+      id: decoded.sub,      // Backend user ID
       email: decoded.email,
       role: decoded.role,
       exp: decoded.exp,
-      raw: decoded           // Keep full decoded data if needed
+      raw: decoded
     };
   } catch (err) {
     console.error("Invalid token", err);

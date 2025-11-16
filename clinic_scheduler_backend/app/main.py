@@ -193,6 +193,6 @@ def update_profile(user_update: dict, request: Request):
 # ==========================================================
 # INCLUDE ROUTERS
 # ==========================================================
-from app.routers import appointments, auth  # Make sure this path matches your project structure
+from .routers import appointments, auth  # Make sure this path matches your project structure
 app.include_router(appointments.router)
 app.include_router(auth.router)

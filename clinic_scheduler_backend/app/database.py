@@ -21,7 +21,7 @@ def get_db():
         db.close()
 
 # Import models so tables are registered
-from app.models import user  # make sure this path is correct
+from .models import user, appointment, clinic, room, provider  # make sure this path is correct
 
 # Create all tables
 Base.metadata.create_all(bind=engine)

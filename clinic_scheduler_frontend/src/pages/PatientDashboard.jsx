@@ -82,7 +82,7 @@ const PatientInfoForm = ({ user, onUpdate }) => {
 };
 
 export default function PatientDashboard() {
-  const user = getCurrentUser(); // get JWT-decoded user
+  const user = JSON.parse(localStorage.getItem("user")) || getCurrentUser();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
 
