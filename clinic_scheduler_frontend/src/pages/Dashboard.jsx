@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import API from "../api/api";
 import AppointmentForm from "../components/AppointmentForm";
+import BookingInfo from "../pages/BookingInfo";
 
 export default function Dashboard() {
   const [appointments, setAppointments] = useState([]);
